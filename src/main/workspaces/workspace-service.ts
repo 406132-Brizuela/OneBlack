@@ -63,6 +63,26 @@ export class WorkspaceService {
     })
   }
 
+  /** Carpeta de un workspace con pestaña abierta: la única que puede tener terminal. */
+  async openTabFolder(workspaceId: string): Promise<string> {
+    const { workspaces, tabs } = await this.snapshot()
+    const workspace = workspaces.find((item) => item.id === workspaceId)
+    if (!workspace || !tabs.openIds.includes(workspaceId)) {
+      throw new UserFacingError('Open the workspace before starting a terminal.')
+    }
+    if (workspace.git.kind === 'missing-folder') {
+      throw new UserFacingError(`Folder not found: ${workspace.path}`)
+    }
+    return workspace.path
+  }
+
+  async nameOf(workspaceId: string): Promise<string> {
+    const workspaces = await this.repository.load()
+    const workspace = workspaces.find((item) => item.id === workspaceId)
+    if (!workspace) throw new UserFacingError('That workspace is no longer registered.')
+    return workspace.name
+  }
+
   close(workspaceId: string): Promise<void> {
     return this.updateTabs((session) => closeTab(session, workspaceId))
   }

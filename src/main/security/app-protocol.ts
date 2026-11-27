@@ -1,8 +1,10 @@
+import { randomBytes } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { extname } from 'node:path'
 import { protocol } from 'electron'
 import { buildContentSecurityPolicy } from '../../shared/content-security-policy'
 import { resolveAssetPath } from './asset-path'
+import { applyNonce } from './csp-nonce'
 import { APP_SCHEME } from './renderer-source'
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -21,10 +23,10 @@ export function registerAppScheme(): void {
   ])
 }
 
-function buildHeaders(filePath: string): Record<string, string> {
+function buildHeaders(filePath: string, nonce: string): Record<string, string> {
   return {
     'Content-Type': CONTENT_TYPES[extname(filePath)] ?? 'application/octet-stream',
-    'Content-Security-Policy': buildContentSecurityPolicy({ asHeader: true }),
+    'Content-Security-Policy': buildContentSecurityPolicy({ nonce, asHeader: true }),
     'X-Content-Type-Options': 'nosniff'
   }
 }
@@ -34,7 +36,9 @@ async function respondWithFile(root: string, requestUrl: string): Promise<Respon
   if (!filePath) return new Response(null, { status: 403 })
   try {
     const content = await readFile(filePath)
-    return new Response(new Uint8Array(content), { headers: buildHeaders(filePath) })
+    const nonce = randomBytes(16).toString('base64')
+    const body = extname(filePath) === '.html' ? applyNonce(content, nonce) : content
+    return new Response(new Uint8Array(body), { headers: buildHeaders(filePath, nonce) })
   } catch {
     return new Response(null, { status: 404 })
   }

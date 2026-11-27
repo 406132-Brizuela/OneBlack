@@ -178,6 +178,9 @@
 
 .shell__content {
   grid-area: content;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: auto;
   padding: var(--space-6);
 }

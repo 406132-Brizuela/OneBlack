@@ -1,10 +1,16 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, Menu, nativeTheme } from 'electron'
+import { IPC_CHANNELS } from '../shared/ipc'
+import { app, BrowserWindow, Menu, nativeTheme, type WebContents } from 'electron'
 import { readGitStatus } from './git/git-status-reader'
 import { registerAppScheme, serveRendererFiles } from './security/app-protocol'
 import { hardenSession, hardenWebContents } from './security/hardening'
 import { resolveRendererSource, type RendererSource } from './security/renderer-source'
+import { closeTabSafely } from './tabs/close-tab'
+import { confirmCloseTab } from './tabs/confirm-close-dialog'
 import { TabSessionRepository } from './tabs/tab-session-repository'
+import { spawnShell } from './terminal/pty'
+import { registerTerminalHandlers } from './terminal/terminal-ipc'
+import { TerminalService } from './terminal/terminal-service'
 import { createMainWindow } from './window'
 import { registerWorkspaceHandlers } from './workspaces/workspace-ipc'
 import { WorkspaceRepository } from './workspaces/workspace-repository'
@@ -30,6 +36,32 @@ function createWorkspaceService(): WorkspaceService {
   )
 }
 
+// La app tiene una sola ventana; al cerrarse puede no quedar ninguna que escuche
+function sendToRenderer(channel: string, payload: unknown): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.webContents.isDestroyed()) window.webContents.send(channel, payload)
+  }
+}
+
+function registerHandlers(source: RendererSource): void {
+  const workspaces = createWorkspaceService()
+  const terminals = new TerminalService(spawnShell, (id) => workspaces.openTabFolder(id), {
+    data: (event) => sendToRenderer(IPC_CHANNELS.terminalData, event),
+    exit: (event) => sendToRenderer(IPC_CHANNELS.terminalExit, event)
+  })
+  const closeTab = (sender: WebContents, workspaceId: string): Promise<void> =>
+    closeTabSafely(workspaceId, {
+      hasRunningTerminal: (id) => terminals.isRunning(id),
+      confirm: async (id) => confirmCloseTab(sender, await workspaces.nameOf(id)),
+      closeTab: (id) => workspaces.close(id),
+      closeTerminal: (id) => terminals.close(id)
+    })
+  registerWorkspaceHandlers(workspaces, source, closeTab)
+  registerTerminalHandlers(terminals, source)
+  // Ningún shell debe sobrevivir a la app
+  app.on('will-quit', () => terminals.closeAll())
+}
+
 function focusExistingWindow(): void {
   const [window] = BrowserWindow.getAllWindows()
   if (!window) return
@@ -44,7 +76,7 @@ async function startApp(source: RendererSource): Promise<void> {
   if (!source.isDevServer) Menu.setApplicationMenu(null)
   hardenSession()
   serveRendererFiles(join(__dirname, '../renderer'))
-  registerWorkspaceHandlers(createWorkspaceService(), source)
+  registerHandlers(source)
   createMainWindow(source)
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow(source)

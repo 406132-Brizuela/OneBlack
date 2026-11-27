@@ -36,6 +36,10 @@ async function launch() {
   })
   page = await application.firstWindow()
   await page.locator('.wordmark').waitFor()
+  // El diálogo de confirmación al cerrar pestañas se acepta; se prueba en terminal.e2e
+  await application.evaluate(({ dialog }) => {
+    dialog.showMessageBox = async () => ({ response: 0 })
+  })
 }
 
 // `null` simula que el usuario cancela el diálogo
