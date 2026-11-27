@@ -101,14 +101,34 @@
   color: var(--color-warning);
 }
 
+.workspace-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.workspace-view[hidden] {
+  display: none;
+}
+
 .workspace-view__header {
-  justify-content: flex-start;
-  padding-bottom: var(--space-3);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-bottom: var(--space-2);
   border-bottom: 2px solid var(--workspace-color);
 }
 
 .workspace-view__path {
+  flex: 1;
+  overflow: hidden;
   color: var(--color-text-muted);
-  overflow-wrap: anywhere;
+  font-size: var(--font-size-small);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   user-select: text;
 }

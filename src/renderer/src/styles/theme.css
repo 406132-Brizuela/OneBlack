@@ -14,6 +14,16 @@
   --color-warning: #fbbf24;
   --color-danger: #f87171;
 
+  --terminal-selection: #a855f755;
+  --terminal-black: #26263a;
+  --terminal-bright-red: #fca5a5;
+  --terminal-bright-green: #86efac;
+  --terminal-bright-yellow: #fde68a;
+  --terminal-bright-blue: #93c5fd;
+  --terminal-bright-magenta: #c084fc;
+  --terminal-bright-cyan: #67e8f9;
+  --terminal-bright-white: #ffffff;
+
   --workspace-violet: #a855f7;
   --workspace-cyan: #22d3ee;
   --workspace-green: #4ade80;

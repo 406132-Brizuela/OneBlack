@@ -1,21 +1,32 @@
 import type { WorkspaceSummary } from '../../../../shared/workspace'
+import { TerminalPane } from '../terminal/TerminalPane'
 import { GitBadge } from './GitBadge'
 
-export function WorkspaceView({ workspace }: { workspace: WorkspaceSummary }) {
+interface WorkspaceViewProps {
+  workspace: WorkspaceSummary
+  isActive: boolean
+}
+
+export function WorkspaceView({ workspace, isActive }: WorkspaceViewProps) {
+  const titleId = `workspace-title-${workspace.id}`
+
   return (
     <article
-      className="workspaces workspace-view"
+      className="workspace-view"
       data-color={workspace.color}
-      aria-labelledby="workspace-title"
+      aria-labelledby={titleId}
+      hidden={!isActive}
     >
-      <header className="workspaces__header workspace-view__header">
-        <h1 id="workspace-title" className="workspaces__title">
+      <header className="workspace-view__header">
+        <h1 id={titleId} className="workspaces__title">
           {workspace.name}
         </h1>
         <GitBadge status={workspace.git} />
+        <p className="workspace-view__path" title={workspace.path}>
+          {workspace.path}
+        </p>
       </header>
-      <p className="workspace-view__path">{workspace.path}</p>
-      <p className="workspaces__empty">Terminals and agents for this workspace will live here.</p>
+      <TerminalPane workspaceId={workspace.id} isActive={isActive} />
     </article>
   )
 }

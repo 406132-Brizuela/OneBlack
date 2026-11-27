@@ -1,6 +1,7 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 import type { WorkspaceSummary } from '../../../../shared/workspace'
 import type { WorkspaceActions } from '../../hooks/useWorkspaces'
+import { keepFocus } from '../../navigation/keep-focus'
 
 interface TabProps {
   workspace: WorkspaceSummary
@@ -28,6 +29,7 @@ export function Tab({ workspace, isActive, actions }: TabProps) {
       className="tab"
       data-color={workspace.color}
       data-active={isActive}
+      onMouseDown={keepFocus}
       onAuxClick={closeWithMiddleClick}
     >
       <button

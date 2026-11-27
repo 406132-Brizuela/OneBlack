@@ -1,0 +1,35 @@
+.terminal-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 12rem;
+}
+
+/* El margen va en el marco: el ajuste de filas mide el elemento interior sin relleno */
+.terminal-pane__frame {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+}
+
+.terminal-pane__frame:focus-within {
+  border-color: var(--color-accent);
+}
+
+.terminal-pane__screen {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.terminal-pane__ended {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-warning);
+  overflow-wrap: anywhere;
+}

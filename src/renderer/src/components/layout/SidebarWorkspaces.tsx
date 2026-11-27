@@ -1,3 +1,4 @@
+import { keepFocus } from '../../navigation/keep-focus'
 import { NUMBERED_SHORTCUTS } from '../../navigation/shortcuts'
 import type { SidebarProps } from './Sidebar'
 
@@ -23,6 +24,7 @@ export function SidebarWorkspaces(props: SidebarProps) {
               data-color={workspace.color}
               title={workspace.path}
               aria-current={workspace.id === activeId ? 'page' : undefined}
+              onMouseDown={keepFocus}
               onClick={() => void actions.open(workspace.id)}
             >
               <span className="color-dot" aria-hidden="true" />
