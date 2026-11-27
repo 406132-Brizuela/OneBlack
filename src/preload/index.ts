@@ -6,7 +6,9 @@ const api: OneBlackApi = {
   workspaces: {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.listWorkspaces),
     register: () => ipcRenderer.invoke(IPC_CHANNELS.registerWorkspace),
-    open: (workspaceId) => ipcRenderer.invoke(IPC_CHANNELS.openWorkspace, workspaceId)
+    open: (workspaceId) => ipcRenderer.invoke(IPC_CHANNELS.openWorkspace, workspaceId),
+    close: (workspaceId) => ipcRenderer.invoke(IPC_CHANNELS.closeWorkspace, workspaceId),
+    showHome: () => ipcRenderer.invoke(IPC_CHANNELS.showHome)
   }
 }
 

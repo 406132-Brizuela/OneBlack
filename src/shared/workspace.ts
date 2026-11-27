@@ -25,3 +25,15 @@ export interface WorkspaceSummary extends Workspace {
 export type RegisterOutcome =
   | { status: 'cancelled' }
   | { status: 'registered' | 'already-registered'; workspaceId: string }
+
+/** Pestañas abiertas, en orden. Sin pestaña activa se muestra la pantalla de inicio. */
+export interface TabSession {
+  openIds: string[]
+  activeId: string | null
+}
+
+export interface WorkspaceSnapshot {
+  /** Ordenados por apertura: el más reciente primero */
+  workspaces: WorkspaceSummary[]
+  tabs: TabSession
+}

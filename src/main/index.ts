@@ -4,12 +4,14 @@ import { readGitStatus } from './git/git-status-reader'
 import { registerAppScheme, serveRendererFiles } from './security/app-protocol'
 import { hardenSession, hardenWebContents } from './security/hardening'
 import { resolveRendererSource, type RendererSource } from './security/renderer-source'
+import { TabSessionRepository } from './tabs/tab-session-repository'
 import { createMainWindow } from './window'
 import { registerWorkspaceHandlers } from './workspaces/workspace-ipc'
 import { WorkspaceRepository } from './workspaces/workspace-repository'
 import { WorkspaceService } from './workspaces/workspace-service'
 
 const WORKSPACES_FILE = 'workspaces.json'
+const TABS_FILE = 'tabs.json'
 // %APPDATA%\OneBlack pertenece a la versión anterior en C#: no se comparte la carpeta
 const USER_DATA_FOLDER = 'OneBlack Desktop'
 
@@ -20,8 +22,12 @@ function useOwnDataFolder(): void {
 }
 
 function createWorkspaceService(): WorkspaceService {
-  const repository = new WorkspaceRepository(join(app.getPath('userData'), WORKSPACES_FILE))
-  return new WorkspaceService(repository, readGitStatus)
+  const userData = app.getPath('userData')
+  return new WorkspaceService(
+    new WorkspaceRepository(join(userData, WORKSPACES_FILE)),
+    new TabSessionRepository(join(userData, TABS_FILE)),
+    readGitStatus
+  )
 }
 
 function focusExistingWindow(): void {

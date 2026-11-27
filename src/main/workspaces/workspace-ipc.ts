@@ -34,12 +34,20 @@ function requireWorkspaceId(value: unknown): string {
 }
 
 export function registerWorkspaceHandlers(service: WorkspaceService, source: RendererSource): void {
-  handleTrusted(IPC_CHANNELS.listWorkspaces, source, () => service.list())
+  handleTrusted(IPC_CHANNELS.listWorkspaces, source, () => service.snapshot())
   handleTrusted(IPC_CHANNELS.registerWorkspace, source, (event) =>
     registerFromDialog(event, service)
   )
   handleTrusted(IPC_CHANNELS.openWorkspace, source, async (_event, workspaceId) => {
     await service.open(requireWorkspaceId(workspaceId))
+    return null
+  })
+  handleTrusted(IPC_CHANNELS.closeWorkspace, source, async (_event, workspaceId) => {
+    await service.close(requireWorkspaceId(workspaceId))
+    return null
+  })
+  handleTrusted(IPC_CHANNELS.showHome, source, async () => {
+    await service.showHome()
     return null
   })
 }
