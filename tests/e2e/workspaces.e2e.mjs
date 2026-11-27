@@ -35,7 +35,7 @@ async function launch() {
     args: [PROJECT_ROOT, `--user-data-dir=${userData}`]
   })
   page = await application.firstWindow()
-  await page.getByRole('heading', { name: 'Workspaces' }).waitFor()
+  await page.locator('.wordmark').waitFor()
 }
 
 // `null` simula que el usuario cancela el diálogo
@@ -50,22 +50,23 @@ async function chooseInDialog(folder) {
 
 async function register(folder) {
   await chooseInDialog(folder)
-  await page.getByRole('button', { name: '+ Register workspace' }).click()
+  await page.getByRole('button', { name: '+ Add' }).click()
+}
+
+const sidebarNames = () => page.locator('.sidebar__name').allInnerTexts()
+const tabNames = () => page.locator('.tab__name').allInnerTexts()
+const sidebarItem = (name) =>
+  page.locator('.sidebar__item--workspace').filter({ hasText: name })
+const waitForActive = (name) => page.getByRole('heading', { name, exact: true }).waitFor()
+
+async function goHome() {
+  await page.getByRole('button', { name: 'Workspaces', exact: true }).click()
+  await waitForActive('Workspaces')
 }
 
 const cards = () => page.locator('.workspace-card')
 const card = (name) => cards().filter({ hasText: name })
 const cardNames = () => page.locator('.workspace-card__name').allInnerTexts()
-
-async function waitForOrder(expected) {
-  await page.waitForFunction(
-    (names) =>
-      [...document.querySelectorAll('.workspace-card__name')]
-        .map((node) => node.textContent)
-        .join() === names,
-    expected.join()
-  )
-}
 
 describe('OneBlack', () => {
   before(async () => {
@@ -82,7 +83,7 @@ describe('OneBlack', () => {
   it('starts with the shell and an empty list', async () => {
     await page.getByText('No workspaces yet').waitFor()
     assert.equal(await page.locator('.wordmark').innerText(), 'OneBlack')
-    assert.equal(await page.locator('.tabbar > *').count(), 0)
+    assert.equal(await page.locator('.tab').count(), 0)
     assert.match(await page.locator('.statusbar').innerText(), /0 workspaces/)
   })
 
@@ -95,7 +96,7 @@ describe('OneBlack', () => {
     assert.deepEqual(globals, {
       require: 'undefined',
       process: 'undefined',
-      api: ['list', 'open', 'register']
+      api: ['close', 'list', 'open', 'register', 'showHome']
     })
     const preferences = await application.evaluate(({ BrowserWindow }) => {
       const found = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences()
@@ -131,60 +132,91 @@ describe('OneBlack', () => {
   it('does nothing when the folder dialog is cancelled', async () => {
     await register(null)
 
-    await page.getByRole('button', { name: '+ Register workspace', disabled: false }).waitFor()
+    await page.getByRole('button', { name: '+ Add', disabled: false }).waitFor()
     assert.equal(await cards().count(), 0)
   })
 
-  it('registers folders and shows their git branch, newest first', async () => {
-    await register(await createFolder('alpha', 'main'))
-    await card('alpha').waitFor()
-    await register(await createFolder('beta', 'feature/neon'))
-    await card('beta').waitFor()
-    await register(await createFolder('plain'))
-    await card('plain').waitFor()
+  it('opens each registered folder in its own tab, with its git branch', async () => {
+    for (const [name, branch] of [['alpha', 'main'], ['beta', 'feature/neon'], ['plain']]) {
+      await register(await createFolder(name, branch))
+      await waitForActive(name)
+    }
 
-    assert.deepEqual(await cardNames(), ['plain', 'beta', 'alpha'])
-    assert.equal(await card('alpha').locator('.git-badge').innerText(), 'main')
-    assert.equal(await card('beta').locator('.git-badge').innerText(), 'feature/neon')
-    assert.equal(await card('plain').locator('.git-badge').innerText(), 'no git repository')
+    assert.deepEqual(await sidebarNames(), ['alpha', 'beta', 'plain'])
+    assert.deepEqual(await tabNames(), ['alpha', 'beta', 'plain'])
+    assert.match(await page.locator('.statusbar').innerText(), /plain\s+no git repository/)
   })
 
-  it('moves an opened workspace to the top and shows it in the status bar', async () => {
-    await card('alpha').click()
-    await waitForOrder(['alpha', 'plain', 'beta'])
+  it('switches workspaces without reordering the sidebar or the tabs', async () => {
+    await sidebarItem('alpha').click()
+    await waitForActive('alpha')
 
-    assert.equal(await card('alpha').getAttribute('aria-current'), 'true')
+    assert.deepEqual(await sidebarNames(), ['alpha', 'beta', 'plain'])
+    assert.deepEqual(await tabNames(), ['alpha', 'beta', 'plain'])
     assert.match(await page.locator('.statusbar').innerText(), /alpha\s+main/)
   })
 
-  it('does not duplicate an already registered folder', async () => {
+  it('navigates with the keyboard', async () => {
+    await page.keyboard.press('Control+2')
+    await waitForActive('beta')
+    await page.keyboard.press('Control+Tab')
+    await waitForActive('plain')
+    await page.keyboard.press('Control+Tab')
+    await waitForActive('alpha')
+    await page.keyboard.press('Control+Shift+Tab')
+    await waitForActive('plain')
+  })
+
+  it('lists the most recently opened first on the home screen', async () => {
+    await goHome()
+
+    assert.deepEqual(await cardNames(), ['plain', 'alpha', 'beta'])
+    assert.equal(await card('beta').locator('.git-badge').innerText(), 'feature/neon')
+  })
+
+  it('opens an already registered folder instead of duplicating it', async () => {
     await register(join(sandbox, 'beta'))
     await page.getByText('already registered').waitFor()
 
-    assert.deepEqual(await cardNames(), ['beta', 'alpha', 'plain'])
+    assert.deepEqual(await sidebarNames(), ['alpha', 'beta', 'plain'])
+    assert.deepEqual(await tabNames(), ['alpha', 'beta', 'plain'])
+  })
+
+  it('closes tabs without unregistering the workspace', async () => {
+    await page.getByRole('button', { name: 'Close beta tab' }).click()
+    await waitForActive('plain')
+    await page.locator('.tab').filter({ hasText: 'plain' }).click({ button: 'middle' })
+    await waitForActive('alpha')
+
+    assert.deepEqual(await tabNames(), ['alpha'])
+    assert.deepEqual(await sidebarNames(), ['alpha', 'beta', 'plain'])
   })
 
   it('re-reads the branch when the window regains focus', async () => {
     git(join(sandbox, 'alpha'), 'checkout', '-b', 'hotfix')
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))
 
-    await card('alpha').getByText('hotfix').waitFor()
+    await page.locator('.statusbar').getByText('hotfix').waitFor()
   })
 
-  it('keeps the list in userData across restarts', async () => {
+  it('restores workspaces and tabs across restarts', async () => {
+    await sidebarItem('beta').click()
+    await waitForActive('beta')
     if (process.env.E2E_SCREENSHOT) await page.screenshot({ path: process.env.E2E_SCREENSHOT })
     await application.close()
     const stored = JSON.parse(await readFile(join(userData, 'workspaces.json'), 'utf8'))
     assert.equal(stored.workspaces.length, 3)
 
     await launch()
-    await card('alpha').waitFor()
+    await waitForActive('beta')
 
-    assert.deepEqual(await cardNames(), ['beta', 'alpha', 'plain'])
+    assert.deepEqual(await tabNames(), ['alpha', 'beta'])
+    assert.deepEqual(await sidebarNames(), ['alpha', 'beta', 'plain'])
   })
 
   it('flags a folder that no longer exists', async () => {
     await rm(join(sandbox, 'plain'), { recursive: true })
+    await goHome()
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))
 
     await card('plain').getByText('folder not found').waitFor()
