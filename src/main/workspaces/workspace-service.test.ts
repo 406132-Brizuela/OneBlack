@@ -157,6 +157,17 @@ describe('WorkspaceService', () => {
     expect(tabs).toEqual({ openIds: [], activeId: null })
   })
 
+  it('gives the folder only to workspaces with an open tab', async () => {
+    const service = createService()
+    const alpha = await register(service, 'alpha')
+
+    await expect(service.openTabFolder(alpha)).resolves.toBe(join(root, 'alpha'))
+    await service.close(alpha)
+
+    await expect(service.openTabFolder(alpha)).rejects.toThrow('Open the workspace')
+    await expect(service.openTabFolder('unknown')).rejects.toThrow('Open the workspace')
+  })
+
   it.each(['not json', '{"version":99,"workspaces":[]}', '{"version":1,"workspaces":[{}]}'])(
     'leaves an invalid file untouched: %s',
     async (content) => {

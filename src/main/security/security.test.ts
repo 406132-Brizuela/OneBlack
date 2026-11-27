@@ -2,6 +2,7 @@ import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildContentSecurityPolicy } from '../../shared/content-security-policy'
 import { resolveAssetPath } from './asset-path'
+import { applyNonce } from './csp-nonce'
 import { resolveRendererSource } from './renderer-source'
 
 describe('resolveAssetPath', () => {
@@ -49,19 +50,29 @@ describe('resolveRendererSource', () => {
 
 describe('buildContentSecurityPolicy', () => {
   it('blocks everything by default and never allows unsafe sources', () => {
-    const policy = buildContentSecurityPolicy({ asHeader: true })
+    const policy = buildContentSecurityPolicy({ nonce: 'abc', asHeader: true })
 
     expect(policy).toContain("default-src 'none'")
+    expect(policy).toContain("script-src 'self';")
+    expect(policy).toContain("style-src 'self' 'nonce-abc'")
     expect(policy).toContain("connect-src 'none'")
     expect(policy).toContain("frame-ancestors 'none'")
     expect(policy).not.toContain('unsafe')
   })
 
-  it('only relaxes the policy with a nonce during development', () => {
-    const policy = buildContentSecurityPolicy({ nonce: 'abc' })
+  it('only allows inline scripts and connections during development', () => {
+    const policy = buildContentSecurityPolicy({ nonce: 'abc', isDevelopment: true })
 
     expect(policy).toContain("script-src 'self' 'nonce-abc'")
     expect(policy).toContain("connect-src 'self'")
     expect(policy).not.toContain('unsafe')
+  })
+})
+
+describe('applyNonce', () => {
+  it('replaces every placeholder', () => {
+    const html = Buffer.from('<meta nonce="__CSP_NONCE__"><script nonce="__CSP_NONCE__">')
+
+    expect(applyNonce(html, 'abc').toString()).toBe('<meta nonce="abc"><script nonce="abc">')
   })
 })

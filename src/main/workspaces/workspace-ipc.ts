@@ -1,9 +1,9 @@
-import { BrowserWindow, dialog, type IpcMainInvokeEvent } from 'electron'
+import { BrowserWindow, dialog, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc'
 import type { RegisterOutcome } from '../../shared/workspace'
 import type { RendererSource } from '../security/renderer-source'
 import { handleTrusted } from '../security/trusted-handler'
-import { UserFacingError } from '../user-facing-error'
+import { requireWorkspaceId } from './workspace-id'
 import type { WorkspaceService } from './workspace-service'
 
 async function pickFolder(event: IpcMainInvokeEvent): Promise<string | null> {
@@ -26,14 +26,11 @@ async function registerFromDialog(
   return folderPath ? service.register(folderPath) : { status: 'cancelled' }
 }
 
-function requireWorkspaceId(value: unknown): string {
-  if (typeof value !== 'string' || value.length === 0) {
-    throw new UserFacingError('Invalid workspace identifier.')
-  }
-  return value
-}
-
-export function registerWorkspaceHandlers(service: WorkspaceService, source: RendererSource): void {
+export function registerWorkspaceHandlers(
+  service: WorkspaceService,
+  source: RendererSource,
+  closeTab: (sender: WebContents, workspaceId: string) => Promise<void>
+): void {
   handleTrusted(IPC_CHANNELS.listWorkspaces, source, () => service.snapshot())
   handleTrusted(IPC_CHANNELS.registerWorkspace, source, (event) =>
     registerFromDialog(event, service)
@@ -42,8 +39,8 @@ export function registerWorkspaceHandlers(service: WorkspaceService, source: Ren
     await service.open(requireWorkspaceId(workspaceId))
     return null
   })
-  handleTrusted(IPC_CHANNELS.closeWorkspace, source, async (_event, workspaceId) => {
-    await service.close(requireWorkspaceId(workspaceId))
+  handleTrusted(IPC_CHANNELS.closeWorkspace, source, async (event, workspaceId) => {
+    await closeTab(event.sender, requireWorkspaceId(workspaceId))
     return null
   })
   handleTrusted(IPC_CHANNELS.showHome, source, async () => {
