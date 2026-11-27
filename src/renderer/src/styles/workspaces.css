@@ -1,0 +1,131 @@
+.workspaces {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 56rem;
+}
+
+.workspaces__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.workspaces__title {
+  font-size: var(--font-size-title);
+}
+
+.workspaces__empty {
+  padding: var(--space-6);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.workspaces__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.message {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-accent);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.message--error {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.workspace-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--workspace-color);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.workspace-card:hover {
+  background: var(--color-surface-hover);
+}
+
+.workspace-card[aria-current='true'] {
+  border-color: var(--color-accent);
+  border-left-color: var(--workspace-color);
+  background: var(--color-accent-soft);
+}
+
+.workspace-card__name,
+.workspace-card__path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-card__name {
+  font-weight: 700;
+}
+
+.workspace-card__path {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.workspace-card[data-color='violet'] {
+  --workspace-color: var(--workspace-violet);
+}
+
+.workspace-card[data-color='cyan'] {
+  --workspace-color: var(--workspace-cyan);
+}
+
+.workspace-card[data-color='green'] {
+  --workspace-color: var(--workspace-green);
+}
+
+.workspace-card[data-color='amber'] {
+  --workspace-color: var(--workspace-amber);
+}
+
+.workspace-card[data-color='pink'] {
+  --workspace-color: var(--workspace-pink);
+}
+
+.workspace-card[data-color='blue'] {
+  --workspace-color: var(--workspace-blue);
+}
+
+.git-badge {
+  max-width: 20rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-small);
+}
+
+.git-badge[data-tone='branch'] {
+  color: var(--color-success);
+}
+
+.git-badge[data-tone='detached'] {
+  color: var(--color-accent);
+}
+
+.git-badge[data-tone='muted'] {
+  color: var(--color-text-muted);
+}
+
+.git-badge[data-tone='warning'] {
+  color: var(--color-warning);
+}

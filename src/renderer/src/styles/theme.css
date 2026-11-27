@@ -1,0 +1,39 @@
+/* Terminal Neon: siempre oscuro, acento violeta, monoespaciada y flat */
+:root {
+  color-scheme: dark;
+
+  --color-bg: #0a0a0f;
+  --color-surface: #111119;
+  --color-surface-hover: #181824;
+  --color-border: #26263a;
+  --color-text: #e4e2f0;
+  --color-text-muted: #8a87a3;
+  --color-accent: #a855f7;
+  --color-accent-soft: #a855f726;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+
+  --workspace-violet: #a855f7;
+  --workspace-cyan: #22d3ee;
+  --workspace-green: #4ade80;
+  --workspace-amber: #fbbf24;
+  --workspace-pink: #f472b6;
+  --workspace-blue: #60a5fa;
+
+  --font-mono: 'Cascadia Code', 'JetBrains Mono', Consolas, 'SF Mono', Menlo, monospace;
+  --font-size-small: 0.75rem;
+  --font-size-base: 0.875rem;
+  --font-size-title: 1.125rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+
+  --radius: 2px;
+  --sidebar-width: 14rem;
+  --tabbar-height: 2.25rem;
+  --statusbar-height: 1.625rem;
+}
