@@ -16,7 +16,7 @@ function createService(): WorkspaceService {
   return new WorkspaceService(
     new WorkspaceRepository(filePath),
     new TabSessionRepository(join(root, 'userData', 'tabs.json')),
-    async () => ({ kind: 'not-a-repository' }),
+    () => Promise.resolve({ kind: 'not-a-repository' }),
     () => new Date(Date.UTC(2026, 0, 1, 0, 0, ++clock))
   )
 }
