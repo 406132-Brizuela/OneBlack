@@ -1,59 +1,69 @@
 import { useState } from 'react'
-import type { RegisterOutcome, WorkspaceSummary } from '../../../shared/workspace'
+import type { IpcResult } from '../../../shared/ipc'
+import type { WorkspaceSummary } from '../../../shared/workspace'
+import { sortByRegistration } from '../navigation/sidebar-order'
 import { settle } from './settle'
-import { useWorkspaceList } from './useWorkspaceList'
+import { useWorkspaceSnapshot } from './useWorkspaceSnapshot'
 
-export interface WorkspacesState {
-  items: WorkspaceSummary[]
-  activeWorkspace: WorkspaceSummary | null
-  isLoading: boolean
-  isRegistering: boolean
-  error: string | null
-  notice: string | null
+export interface WorkspaceActions {
   register: () => Promise<void>
   open: (workspaceId: string) => Promise<void>
+  close: (workspaceId: string) => Promise<void>
+  showHome: () => Promise<void>
 }
 
-const ALREADY_REGISTERED_NOTICE = 'That folder was already registered. It is now active.'
+const ALREADY_REGISTERED_NOTICE = 'That folder was already registered. It is now open.'
 
-export function useWorkspaces(): WorkspacesState {
-  const { items, isLoading, loadError, refresh } = useWorkspaceList()
-  const [activeId, setActiveId] = useState<string | null>(null)
+function useWorkspaceActions(refresh: () => Promise<void>) {
   const [isRegistering, setIsRegistering] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
-  const clearMessages = (): void => {
+  // Toda acción limpia los mensajes, informa su error y relee el estado
+  const run = async <T>(request: () => Promise<IpcResult<T>>): Promise<T | null> => {
     setActionError(null)
     setNotice(null)
-  }
-
-  const applyRegistration = async (outcome: RegisterOutcome): Promise<void> => {
-    if (outcome.status === 'cancelled') return
+    const result = await settle(request())
+    if (!result.ok) setActionError(result.error)
     await refresh()
-    setActiveId(outcome.workspaceId)
-    if (outcome.status === 'already-registered') setNotice(ALREADY_REGISTERED_NOTICE)
+    return result.ok ? result.value : null
   }
 
   const register = async (): Promise<void> => {
     setIsRegistering(true)
-    clearMessages()
-    const result = await settle(window.oneblack.workspaces.register())
-    if (result.ok) await applyRegistration(result.value)
-    else setActionError(result.error)
+    const outcome = await run(() => window.oneblack.workspaces.register())
+    if (outcome?.status === 'already-registered') setNotice(ALREADY_REGISTERED_NOTICE)
     setIsRegistering(false)
   }
 
-  const open = async (workspaceId: string): Promise<void> => {
-    clearMessages()
-    const result = await settle(window.oneblack.workspaces.open(workspaceId))
-    if (result.ok) setActiveId(workspaceId)
-    else setActionError(result.error)
-    await refresh()
+  const actions: WorkspaceActions = {
+    register,
+    open: async (id) => void (await run(() => window.oneblack.workspaces.open(id))),
+    close: async (id) => void (await run(() => window.oneblack.workspaces.close(id))),
+    showHome: async () => void (await run(() => window.oneblack.workspaces.showHome()))
   }
 
-  const activeWorkspace = items.find((item) => item.id === activeId) ?? null
-  const error = actionError ?? loadError
+  return { actions, isRegistering, actionError, notice }
+}
 
-  return { items, activeWorkspace, isLoading, isRegistering, error, notice, register, open }
+export function useWorkspaces() {
+  const { snapshot, isLoading, loadError, refresh } = useWorkspaceSnapshot()
+  const { actions, isRegistering, actionError, notice } = useWorkspaceActions(refresh)
+  const { workspaces, tabs } = snapshot
+
+  const findById = (id: string | null): WorkspaceSummary | undefined =>
+    workspaces.find((workspace) => workspace.id === id)
+
+  return {
+    actions,
+    tabs,
+    recent: workspaces,
+    sidebarItems: sortByRegistration(workspaces),
+    openWorkspaces: tabs.openIds.flatMap((id) => findById(id) ?? []),
+    activeWorkspace: findById(tabs.activeId) ?? null,
+    isLoading,
+    isRegistering,
+    error: actionError ?? loadError,
+    notice
+  }
 }

@@ -1,0 +1,23 @@
+[data-color='violet'] {
+  --workspace-color: var(--workspace-violet);
+}
+
+[data-color='cyan'] {
+  --workspace-color: var(--workspace-cyan);
+}
+
+[data-color='green'] {
+  --workspace-color: var(--workspace-green);
+}
+
+[data-color='amber'] {
+  --workspace-color: var(--workspace-amber);
+}
+
+[data-color='pink'] {
+  --workspace-color: var(--workspace-pink);
+}
+
+[data-color='blue'] {
+  --workspace-color: var(--workspace-blue);
+}

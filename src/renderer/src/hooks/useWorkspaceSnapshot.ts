@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { WorkspaceSummary } from '../../../shared/workspace'
+import type { WorkspaceSnapshot } from '../../../shared/workspace'
 import { settle } from './settle'
 
-export function useWorkspaceList() {
-  const [items, setItems] = useState<WorkspaceSummary[]>([])
+const EMPTY_SNAPSHOT: WorkspaceSnapshot = {
+  workspaces: [],
+  tabs: { openIds: [], activeId: null }
+}
+
+export function useWorkspaceSnapshot() {
+  const [snapshot, setSnapshot] = useState(EMPTY_SNAPSHOT)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const latestRequest = useRef(0)
@@ -13,7 +18,7 @@ export function useWorkspaceList() {
     const result = await settle(window.oneblack.workspaces.list())
     // Una respuesta vieja no debe pisar a una más nueva
     if (request !== latestRequest.current) return
-    if (result.ok) setItems(result.value)
+    if (result.ok) setSnapshot(result.value)
     setLoadError(result.ok ? null : result.error)
     setIsLoading(false)
   }, [])
@@ -26,5 +31,5 @@ export function useWorkspaceList() {
     return () => window.removeEventListener('focus', handleFocus)
   }, [refresh])
 
-  return { items, isLoading, loadError, refresh }
+  return { snapshot, isLoading, loadError, refresh }
 }

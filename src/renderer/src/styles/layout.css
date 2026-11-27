@@ -11,6 +11,9 @@
 
 .sidebar {
   grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border-right: 1px solid var(--color-border);
   background: var(--color-surface);
 }
@@ -30,8 +33,62 @@
   color: var(--color-accent);
 }
 
-.sidebar__list {
+.sidebar__nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   padding: var(--space-2) 0;
+}
+
+.sidebar__workspaces {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Con muchos workspaces solo se desplaza esta lista */
+.sidebar__list--workspaces {
+  flex: 0 1 auto;
+  overflow-y: auto;
+}
+
+.sidebar__list--upcoming {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.sidebar__item--workspace {
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.sidebar__item--workspace,
+.sidebar__item--add {
+  padding-left: var(--space-6);
+}
+
+.sidebar__item--add {
+  color: var(--color-text-muted);
+}
+
+.sidebar__item:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+}
+
+.sidebar__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-dot {
+  flex: none;
+  width: var(--space-2);
+  height: var(--space-2);
+  background: var(--workspace-color);
 }
 
 .sidebar__item {
@@ -56,14 +113,67 @@
 }
 
 .sidebar__badge {
+  font-family: inherit;
   font-size: var(--font-size-small);
   opacity: 0.7;
 }
 
 .tabbar {
   grid-area: tabbar;
+  min-width: 0;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
+}
+
+.tabbar__list {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab {
+  display: flex;
+  flex: none;
+  max-width: 14rem;
+  border-top: 2px solid transparent;
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.tab[data-active='true'] {
+  border-top-color: var(--workspace-color);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.tab__label,
+.tab__close {
+  border: 0;
+  background: transparent;
+}
+
+.tab__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--space-2) 0 var(--space-3);
+}
+
+.tab__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab__close {
+  padding: 0 var(--space-3) 0 var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.tab__close:hover {
+  color: var(--color-danger);
 }
 
 .shell__content {

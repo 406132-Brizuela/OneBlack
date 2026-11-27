@@ -1,11 +1,17 @@
-const NAVIGATION_ITEMS = [
-  { label: 'Workspaces', isAvailable: true },
-  { label: 'Agents', isAvailable: false },
-  { label: 'Key vault', isAvailable: false },
-  { label: 'Settings', isAvailable: false }
-]
+import type { WorkspaceSummary } from '../../../../shared/workspace'
+import type { WorkspaceActions } from '../../hooks/useWorkspaces'
+import { SidebarWorkspaces } from './SidebarWorkspaces'
 
-export function Sidebar() {
+const UPCOMING_SECTIONS = ['Agents', 'Key vault', 'Settings']
+
+export interface SidebarProps {
+  workspaces: WorkspaceSummary[]
+  activeId: string | null
+  isRegistering: boolean
+  actions: WorkspaceActions
+}
+
+export function Sidebar(props: SidebarProps) {
   return (
     <aside className="sidebar">
       <header className="sidebar__header">
@@ -13,18 +19,14 @@ export function Sidebar() {
           One<span className="wordmark__accent">Black</span>
         </p>
       </header>
-      <nav aria-label="Main">
-        <ul className="sidebar__list">
-          {NAVIGATION_ITEMS.map(({ label, isAvailable }) => (
+      <nav className="sidebar__nav" aria-label="Main">
+        <SidebarWorkspaces {...props} />
+        <ul className="sidebar__list sidebar__list--upcoming">
+          {UPCOMING_SECTIONS.map((label) => (
             <li key={label}>
-              <button
-                type="button"
-                className="sidebar__item"
-                aria-current={isAvailable ? 'page' : undefined}
-                disabled={!isAvailable}
-              >
+              <button type="button" className="sidebar__item" disabled>
                 {label}
-                {!isAvailable && <span className="sidebar__badge">soon</span>}
+                <span className="sidebar__badge">soon</span>
               </button>
             </li>
           ))}

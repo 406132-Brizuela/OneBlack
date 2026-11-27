@@ -3,17 +3,15 @@ import { GitBadge } from './GitBadge'
 
 interface WorkspaceCardProps {
   workspace: WorkspaceSummary
-  isActive: boolean
   onOpen: (workspaceId: string) => void
 }
 
-export function WorkspaceCard({ workspace, isActive, onOpen }: WorkspaceCardProps) {
+export function WorkspaceCard({ workspace, onOpen }: WorkspaceCardProps) {
   return (
     <button
       type="button"
       className="workspace-card"
       data-color={workspace.color}
-      aria-current={isActive ? 'true' : undefined}
       onClick={() => onOpen(workspace.id)}
     >
       <span className="workspace-card__name">{workspace.name}</span>
