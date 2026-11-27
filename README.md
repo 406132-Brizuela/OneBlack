@@ -43,10 +43,19 @@ npm run dev        # run with hot reload
 | `npm run build`     | Type-check and build into `out/`                      |
 | `npm start`         | Run the production build (builds it first)            |
 | `npm run typecheck` | Type-check the main, preload and renderer code        |
+| `npm run lint`      | Lint the whole project                                |
 | `npm test`          | Unit tests                                            |
 | `npm run test:e2e`  | Build and drive the real app from end to end          |
+| `npm run verify`    | Everything CI checks: run it before pushing           |
 
 There is no installer yet: packaging is on the roadmap.
+
+## Contributing
+
+Work happens on `feat/`, `fix/`, `chore/` or `docs/` branches created from `develop`, with
+conventional commit messages. `develop` and `main` only change through pull requests, and a
+pull request can be merged once the `verify` check passes. It runs lint, type-check, build, unit
+and end-to-end tests on Windows with GitHub Actions.
 
 ## Project structure
 
