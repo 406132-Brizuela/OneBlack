@@ -7,9 +7,16 @@ It is in early development. Today it ships the application shell and workspace m
 
 - Register a project folder through the native folder picker. OneBlack stores its name,
   path and an automatically assigned color.
-- Browse registered workspaces, most recently opened first.
+- Each open workspace gets its own tab. The sidebar keeps a fixed order (registration) and
+  the home screen lists workspaces most recently opened first. Open tabs survive restarts.
+- Closing a tab (button or middle click) keeps the workspace registered.
 - See the current git branch of each workspace, read locally from `.git` (no network, no
   `gh`, no git commands executed). It refreshes when the window regains focus.
+
+| Shortcut                      | Action                                      |
+| ----------------------------- | ------------------------------------------- |
+| `Ctrl+1` … `Ctrl+9`           | Open the workspace at that sidebar position |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | Next / previous tab                         |
 
 ## Stack
 
@@ -48,6 +55,8 @@ src/
 ├── main/              Main process: the only place with filesystem and OS access
 │   ├── git/           Read-only git status from .git metadata
 │   ├── security/      Custom protocol, navigation and permission guards, IPC sender checks
+│   ├── storage/       Atomic JSON file access
+│   ├── tabs/          Open tab session and its persistence
 │   ├── workspaces/    Model, JSON persistence, service and IPC handlers
 │   ├── index.ts       Application bootstrap
 │   └── window.ts      Main window and its web preferences
@@ -56,6 +65,7 @@ src/
 │   └── src/
 │       ├── components/  Layout shell and workspace views
 │       ├── hooks/       UI state and calls to the exposed API
+│       ├── navigation/  Sidebar order and keyboard shortcuts
 │       └── styles/      Terminal Neon theme (CSS custom properties) and styles
 └── shared/            Types, IPC contract and Content Security Policy
 tests/e2e/             End-to-end tests
@@ -67,8 +77,10 @@ Workspaces are saved in `workspaces.json` inside the app's `userData` folder
 (`%APPDATA%\OneBlack Desktop` on Windows). The folder is deliberately different from
 `%APPDATA%\OneBlack`, which belongs to the earlier C# application.
 
-Writes are atomic. If the file is invalid, OneBlack reports it and leaves it untouched instead
-of overwriting it.
+Open tabs are saved separately in `tabs.json`.
+
+Writes are atomic. If `workspaces.json` is invalid, OneBlack reports it and leaves it untouched
+instead of overwriting it. An invalid `tabs.json` is disposable and simply ignored.
 
 ## Security posture
 
@@ -76,8 +88,8 @@ The renderer is treated as untrusted.
 
 - **Process isolation:** `contextIsolation` on, `nodeIntegration` off, renderer sandbox enabled
   for the whole app, `<webview>` disabled.
-- **Capability-based IPC:** the preload exposes only `workspaces.list`, `workspaces.register`
-  and `workspaces.open`. The renderer never receives `ipcRenderer` or Node objects, and never
+- **Capability-based IPC:** the preload exposes only the `workspaces` actions `list`, `register`,
+  `open`, `close` and `showHome`. The renderer never receives `ipcRenderer` or Node objects, and never
   sends filesystem paths: new paths come exclusively from the native dialog.
 - **IPC validation:** handlers accept calls only from the main frame of the app's own origin,
   validate their arguments and do not forward internal error details.
@@ -100,6 +112,6 @@ deleted, never read back by the UI) and will live entirely in the main process.
 2. Launch any agent CLI by command inside a workspace
 3. Write-only key vault (Argon2id, AES-256-GCM and Electron `safeStorage`), injecting keys as
    environment variables into agent processes
-4. Workspace editing: rename, recolor and remove
+4. Workspace search (`Ctrl+Shift+K`), pinning, reordering, renaming, recoloring and removal
 5. Packaging, installer and Electron fuses
 6. GitHub integration through the `gh` CLI
